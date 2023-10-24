@@ -1,6 +1,6 @@
 import { Endpoint } from '../endpoint'
 import { EndpointClient, EndpointClientConfig } from '../endpoint-client'
-import { LocaleReference, Status, SuccessStatusValue } from '../types'
+import {LocaleReference, Owner, Status, SuccessStatusValue} from '../types'
 import { CapabilityReference, PreferenceType } from './devices'
 
 
@@ -90,6 +90,20 @@ export interface DeviceProfileTranslations {
 	components?: { [key: string]: ComponentTranslations }
 }
 
+export interface DeviceIntegrationProfileKey {
+	id: string
+	majorVersion: number
+	minorVersion?: number
+	overrideProfileId?: string
+}
+export interface DeviceIntegrationProfile {
+	key: DeviceIntegrationProfileKey
+	name: string
+	deviceProfileId: string
+	owner: Owner
+	writeTime: string
+}
+
 export class DeviceProfilesEndpoint extends Endpoint {
 	constructor(config: EndpointClientConfig) {
 		super(new EndpointClient('deviceprofiles', config))
@@ -128,7 +142,33 @@ export class DeviceProfilesEndpoint extends Endpoint {
 	}
 
 	/**
-	 * Update a device profile
+	 * Create an implicit device profile
+	 * @param data device profile definition
+	 * @param generatePresentationConfig whether to generate a presentation config
+	 */
+	public createImplicit(data: DeviceProfileCreateRequest, generatePresentationConfig = false): Promise<DeviceProfile> {
+		return this.client.post('implicit', data, {generatePresentationConfig: generatePresentationConfig.toString()})
+	}
+
+	public createDeviceIntegrationProfile(deviceProfileId: string, name: string): Promise<DeviceIntegrationProfile> {
+		//return this.client.post(`https://dossier-global.api.smartthings.com/deviceintegrationprofiles/backend/${backendType}`, {deviceProfileId, name})
+		return this.client.post(`https://dossier-global.api.smartthings.com/deviceintegrationprofiles`, {deviceProfileId, name})
+	}
+
+	public getDeviceIntegrationProfile(id: string, version: string): Promise<DeviceIntegrationProfile> {
+		return this.client.get(`https://dossier-global.api.smartthings.com/deviceintegrationprofiles/${id}/${version}`)
+	}
+
+	public listDeviceIntegrationProfiles(): Promise<DeviceIntegrationProfile[]> {
+		return this.client.getPagedItems<DeviceIntegrationProfile>(`https://dossier-global.api.smartthings.com/deviceintegrationprofiles`)
+	}
+
+	public deleteDeviceIntegrationProfile(id: string): Promise<void> {
+		return this.client.delete(`https://dossier-global.api.smartthings.com/deviceintegrationprofiles/${id}`)
+	}
+
+	/**
+	 * Update a device profilex`
 	 * @param id UUID of the device profile
 	 * @param data the new device profile definition
 	 */
